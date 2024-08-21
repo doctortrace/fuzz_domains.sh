@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Ensure the script stops on errors
+set -e
+
+# Check for the right number of arguments
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 <domains_file> <wordlist>"
+    exit 1
+fi
+
+# Assign arguments to variables
+DOMAINS_FILE="$1"
+WORDLIST="$2"
+
+# Check if the files exist
+if [ ! -f "$DOMAINS_FILE" ]; then
+    echo "Domains file not found!"
+    exit 1
+fi
+
+if [ ! -f "$WORDLIST" ]; then
+    echo "Wordlist file not found!"
+    exit 1
+fi
+
+# Loop through each domain in the domains file
+while IFS= read -r domain; do
+    echo "Fuzzing $domain"
+    
+    # Run ffuf to fuzz each domain with the provided wordlist
+    ./ffuf -u "$domain/FUZZ" -w "$WORDLIST" -p 1 -c -fs 0 -fc 404,400,403,401,405,500,302,301 -v -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+
+    echo "Finished fuzzing $domain"
+done < "$DOMAINS_FILE"
+
+echo "All domains have been fuzzed."
